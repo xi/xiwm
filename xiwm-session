@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -f "$HOME/.config/xiwm/environment" ]; then
+	. "$HOME/.config/xiwm/environment"
+fi
+
+exec xiwm

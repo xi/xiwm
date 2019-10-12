@@ -1,0 +1,6 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=xiwm
+Comment=Xi's window manager
+Exec=xiwm-session
+Type=XSession
