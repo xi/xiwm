@@ -21,6 +21,8 @@
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
 #define MAX(A, B)               ((A) > (B) ? (A) : (B))
+#define WINMASK                 (FocusChangeMask|PropertyChangeMask)
+#define ROOTMASK                (SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask|PointerMotionMask|PropertyChangeMask)
 
 /* enums */
 enum { NetSupported, NetWMName, NetWMDesktop, NetWMState, NetWMCheck,
@@ -545,7 +547,7 @@ manage(Window w, XWindowAttributes *wa)
 
 	XSetWindowBorder(dpy, c->win, col_norm);
 	updatefixed(c);
-	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+	XSelectInput(dpy, w, WINMASK);
 	grabbuttons(c, False);
 	if (trans != None || c->isfixed)
 		c->position = PFloat;
@@ -938,7 +940,6 @@ void
 setup(void)
 {
 	int screen;
-	XSetWindowAttributes wa;
 	Atom utf8string;
 
 	XSync(dpy, False);
@@ -989,10 +990,7 @@ setup(void)
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
 
 	/* select events */
-	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask
-		|ButtonPressMask|PointerMotionMask|EnterWindowMask
-		|LeaveWindowMask|StructureNotifyMask|PropertyChangeMask;
-	XSelectInput(dpy, root, wa.event_mask);
+	XSelectInput(dpy, root, ROOTMASK);
 	grabkeys();
 	xsetdesktop();
 	focus(NULL);
