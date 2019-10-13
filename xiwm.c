@@ -29,7 +29,7 @@ enum { NetSupported, NetWMName, NetWMDesktop, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDialog, NetWMWindowTypeDock,
        NetClientList, NetCurrentDesktop, NetLast }; /* EWMH atoms */
-enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
+enum { WMProtocols, WMDelete, WMState, WMLast }; /* default atoms */
 typedef enum { PFloat, PMax, PLeft, PRight } Position;
 
 typedef union {
@@ -513,7 +513,6 @@ focus(Client *c)
 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 		XChangeProperty(dpy, root, netatom[NetActiveWindow], XA_WINDOW, 32,
 			PropModeReplace, (unsigned char *) &(c->win), 1);
-		sendevent(c, wmatom[WMTakeFocus]);
 	} else {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
@@ -937,7 +936,6 @@ setup(void)
 	wmatom[WMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	wmatom[WMDelete] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	wmatom[WMState] = XInternAtom(dpy, "WM_STATE", False);
-	wmatom[WMTakeFocus] = XInternAtom(dpy, "WM_TAKE_FOCUS", False);
 	netatom[NetActiveWindow] = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
 	netatom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
 	netatom[NetWMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
