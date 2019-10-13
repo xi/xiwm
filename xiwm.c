@@ -539,8 +539,6 @@ manage(Window w, XWindowAttributes *wa)
 		PropModeAppend, (unsigned char *) &(c->win), 1);
 	XMoveResizeWindow(dpy, c->win, c->x + 2 * sw, c->y, c->w, c->h); /* some windows require this */
 	xsetclientstate(c, NormalState);
-	unfocus(sel);
-	sel = c;
 	arrange();
 	XMapWindow(dpy, c->win);
 	focus(NULL);
