@@ -29,7 +29,7 @@ enum {
 	NetSupported, NetWMName, NetWMDesktop, NetWMState, NetWMCheck,
 	NetWMFullscreen, NetActiveWindow, NetWMWindowType,
 	NetWMWindowTypeDialog, NetWMWindowTypeDock,
-	NetClientList, NetCurrentDesktop, NetLast
+	NetClientList, NetCurrentDesktop, NetNumberOfDesktops, NetLast
 }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMLast }; /* default atoms */
 typedef enum { PFloat, PMax, PLeft, PRight } Position;
@@ -874,6 +874,7 @@ setup(void)
 	netatom[NetWMWindowTypeDock] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DOCK", False);
 	netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
+	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 
 	/* supporting window for NetWMCheck */
 	wmcheckwin = XCreateSimpleWindow(dpy, root, 0, 0, 1, 1, 0, 0, 0);
@@ -888,6 +889,8 @@ setup(void)
 	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
 		PropModeReplace, (unsigned char *) netatom, NetLast);
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
+	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL, 32,
+		PropModeReplace, (unsigned char *) &desktops, 1);
 
 	/* select events */
 	XSelectInput(dpy, root, ROOTMASK);
