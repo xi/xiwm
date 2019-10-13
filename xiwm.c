@@ -87,7 +87,6 @@ static void spawn(const Arg *arg);
 static void keypress(XEvent *e);
 static void buttonpress(XEvent *e);
 static void clientmessage(XEvent *e);
-static void configurenotify(XEvent *e);
 static void destroynotify(XEvent *e);
 static void unmapnotify(XEvent *e);
 static void configurerequest(XEvent *e);
@@ -105,7 +104,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[KeyPress] = keypress,
 	[ButtonPress] = buttonpress,
 	[ClientMessage] = clientmessage,
-	[ConfigureNotify] = configurenotify,
 	[DestroyNotify] = destroynotify,
 	[UnmapNotify] = unmapnotify,
 	[MapRequest] = maprequest,
@@ -654,19 +652,6 @@ clientmessage(XEvent *e)
 			focus(c);
 			arrange();
 		}
-	}
-}
-
-void
-configurenotify(XEvent *e)
-{
-	XConfigureEvent *ev = &e->xconfigure;
-
-	if (ev->window == root) {
-		sw = ev->width;
-		sh = ev->height;
-		focus(NULL);
-		arrange();
 	}
 }
 
