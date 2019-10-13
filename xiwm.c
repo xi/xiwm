@@ -906,7 +906,7 @@ setup(void)
 }
 
 void
-runAutostart(void) {
+runautostart(void) {
 	system("~/.config/xiwm/autostart.sh");
 }
 
@@ -940,7 +940,7 @@ main(int argc, char *argv[])
 	if (!(dpy = XOpenDisplay(NULL)))
 		die("xiwm: cannot open display");
 	setup();
-	runAutostart();
+	runautostart();
 	run();
 	cleanup();
 	XCloseDisplay(dpy);
