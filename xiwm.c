@@ -621,9 +621,11 @@ buttonpress(XEvent *e)
 	XButtonPressedEvent *ev = &e->xbutton;
 
 	if ((c = wintoclient(ev->window))) {
+		XAllowEvents(dpy, ReplayPointer, CurrentTime);
+		if (c->isdock)
+			return;
 		focus(c);
 		restack();
-		XAllowEvents(dpy, ReplayPointer, CurrentTime);
 		for (i = 0; i < LENGTH(buttons); i++)
 			if (buttons[i].func && buttons[i].button == ev->button
 			&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
