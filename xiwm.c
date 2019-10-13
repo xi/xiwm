@@ -349,7 +349,7 @@ setfullscreen(Client *c, Bool fullscreen)
 void
 setdesktop(unsigned int i)
 {
-	if (i == desktop || i > DESKTOPS)
+	if (i == desktop || i >= DESKTOPS)
 		return;
 	desktop = i;
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
