@@ -447,7 +447,6 @@ applyrules(Client *c)
 		XFree(ch.res_class);
 	if (ch.res_name)
 		XFree(ch.res_name);
-	xsetclientdesktop(c);
 }
 
 void
@@ -498,29 +497,28 @@ manage(Window w, XWindowAttributes *wa)
 	c = calloc(1, sizeof(Client));
 	c->win = w;
 	c->position = PMax;
+	c->desktop = desktop;
 	/* geometry */
 	c->fx = c->x = wa->x == 0 ? (sw - wa->width) / 2 : wa->x;
 	c->fy = c->y = wa->y == 0 ? (sh - wa->height) / 2 : wa->y;
 	c->fw = c->w = wa->width;
 	c->fh = c->h = wa->height;
 
-	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
+	applyrules(c);
+	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans)))
 		c->desktop = t->desktop;
-		xsetclientdesktop(c);
-	} else {
-		c->desktop = desktop;
-		applyrules(c);
-	}
+	xsetclientdesktop(c);
 	updatewindowtype(c);
-
-	XSetWindowBorder(dpy, c->win, col_norm);
 	updatefixed(c);
-	XSelectInput(dpy, w, WINMASK);
-	grabbuttons(c, False);
 	if (trans != None || c->isfixed)
 		c->position = PFloat;
-	if (c->position == PFloat)
-		XRaiseWindow(dpy, c->win);
+
+	if (c->isdock)
+		bh = c->h;
+
+	XSetWindowBorder(dpy, c->win, col_norm);
+	XSelectInput(dpy, w, WINMASK);
+	grabbuttons(c, False);
 	attach(c);
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
 		PropModeAppend, (unsigned char *) &(c->win), 1);
@@ -529,11 +527,6 @@ manage(Window w, XWindowAttributes *wa)
 	XMapWindow(dpy, c->win);
 	focus(NULL);
 	layout();
-
-	if (c->isdock) {
-		bh = c->h;
-		layout();
-	}
 }
 
 void
