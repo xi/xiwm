@@ -15,20 +15,22 @@
 #include <X11/Xutil.h>
 
 /* macros */
-#define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
-#define CLEANMASK(mask)         (mask & ~(LockMask) & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
-#define ISVISIBLE(C)            (!(C)->isdock && ((C)->desktop == desktop))
-#define LENGTH(X)               (sizeof X / sizeof X[0])
-#define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
-#define MAX(A, B)               ((A) > (B) ? (A) : (B))
-#define WINMASK                 (FocusChangeMask|PropertyChangeMask)
-#define ROOTMASK                (SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask|PointerMotionMask|PropertyChangeMask)
+#define BUTTONMASK       (ButtonPressMask|ButtonReleaseMask)
+#define CLEANMASK(mask)  (mask & ~(LockMask) & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
+#define ISVISIBLE(C)     (!(C)->isdock && ((C)->desktop == desktop))
+#define LENGTH(X)        (sizeof X / sizeof X[0])
+#define MOUSEMASK        (BUTTONMASK|PointerMotionMask)
+#define MAX(A, B)        ((A) > (B) ? (A) : (B))
+#define WINMASK          (FocusChangeMask|PropertyChangeMask)
+#define ROOTMASK         (SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask|PointerMotionMask|PropertyChangeMask)
 
 /* enums */
-enum { NetSupported, NetWMName, NetWMDesktop, NetWMState, NetWMCheck,
-       NetWMFullscreen, NetActiveWindow, NetWMWindowType,
-       NetWMWindowTypeDialog, NetWMWindowTypeDock,
-       NetClientList, NetCurrentDesktop, NetLast }; /* EWMH atoms */
+enum {
+	NetSupported, NetWMName, NetWMDesktop, NetWMState, NetWMCheck,
+	NetWMFullscreen, NetActiveWindow, NetWMWindowType,
+	NetWMWindowTypeDialog, NetWMWindowTypeDock,
+	NetClientList, NetCurrentDesktop, NetLast
+}; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMLast }; /* default atoms */
 typedef enum { PFloat, PMax, PLeft, PRight } Position;
 
