@@ -39,13 +39,6 @@ typedef union {
 	const void *v;
 } Arg;
 
-typedef struct {
-	unsigned int mask;
-	unsigned int button;
-	void (*func)(const Arg *arg);
-	const Arg arg;
-} Button;
-
 typedef struct Client Client;
 struct Client {
 	int x, y, w, h;
@@ -79,8 +72,6 @@ static void viewrel(const Arg *arg);
 static void focusstack(const Arg *arg);
 static void setposition(const Arg *arg);
 static void setmfact(const Arg *arg);
-static void movemouse(const Arg *arg);
-static void resizemouse(const Arg *arg);
 static void killclient(const Arg *arg);
 static void quit(const Arg *arg);
 static void spawn(const Arg *arg);
@@ -206,19 +197,19 @@ wintoclient(Window w)
 void
 grabbuttons(Client *c, Bool focused)
 {
-	unsigned int i, j;
+	unsigned int i;
 	unsigned int modifiers[] = { 0, LockMask };
 
 	XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
 	if (!focused)
 		XGrabButton(dpy, AnyButton, AnyModifier, c->win, False,
 			BUTTONMASK, GrabModeSync, GrabModeSync, None, None);
-	for (i = 0; i < LENGTH(buttons); i++)
-		for (j = 0; j < LENGTH(modifiers); j++)
-			XGrabButton(dpy, buttons[i].button,
-				buttons[i].mask | modifiers[j],
-				c->win, False, BUTTONMASK,
-				GrabModeAsync, GrabModeSync, None, None);
+	for (i = 0; i < LENGTH(modifiers); i++) {
+		XGrabButton(dpy, Button1, Mod1Mask|modifiers[i], c->win,
+			False, BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+		XGrabButton(dpy, Button3, Mod1Mask|modifiers[i], c->win,
+			False, BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+	}
 }
 
 void
@@ -566,9 +557,93 @@ keypress(XEvent *e)
 }
 
 void
+movemouse(void)
+{
+	int x, y, ocx, ocy, nx, ny, di;
+	unsigned int dui;
+	Client *c;
+	XEvent ev;
+	Time lasttime = 0;
+	Window dummy;
+
+	if (!(c = sel))
+		return;
+	if (c->isfullscreen || c->position != PFloat)
+		return;
+	ocx = c->x;
+	ocy = c->y;
+	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+		None, None, CurrentTime) != GrabSuccess)
+		return;
+	if (!XQueryPointer(dpy, root, &dummy, &dummy, &x, &y, &di, &di, &dui))
+		return;
+	do {
+		XMaskEvent(dpy, MOUSEMASK|ExposureMask|SubstructureRedirectMask, &ev);
+		switch(ev.type) {
+		case ConfigureRequest:
+		case MapRequest:
+			handler[ev.type](&ev);
+			break;
+		case MotionNotify:
+			if ((ev.xmotion.time - lasttime) <= (1000 / 60))
+				continue;
+			lasttime = ev.xmotion.time;
+
+			nx = ocx + (ev.xmotion.x - x);
+			ny = ocy + (ev.xmotion.y - y);
+			if (c->position == PFloat)
+				resize(c, nx, ny, c->w, c->h, 1);
+			break;
+		}
+	} while (ev.type != ButtonRelease);
+	XUngrabPointer(dpy, CurrentTime);
+}
+
+void
+resizemouse(void)
+{
+	int ocx, ocy, nw, nh;
+	Client *c;
+	XEvent ev;
+	Time lasttime = 0;
+
+	if (!(c = sel))
+		return;
+	if (c->isfullscreen || c->position != PFloat)
+		return;
+	ocx = c->x;
+	ocy = c->y;
+	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+		None, None, CurrentTime) != GrabSuccess)
+		return;
+	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w, c->h);
+	do {
+		XMaskEvent(dpy, MOUSEMASK|ExposureMask|SubstructureRedirectMask, &ev);
+		switch(ev.type) {
+		case ConfigureRequest:
+		case MapRequest:
+			handler[ev.type](&ev);
+			break;
+		case MotionNotify:
+			if ((ev.xmotion.time - lasttime) <= (1000 / 60))
+				continue;
+			lasttime = ev.xmotion.time;
+
+			nw = MAX(ev.xmotion.x - ocx - 1, 1);
+			nh = MAX(ev.xmotion.y - ocy - 1, 1);
+			if (c->position == PFloat)
+				resize(c, c->x, c->y, nw, nh, 1);
+			break;
+		}
+	} while (ev.type != ButtonRelease);
+	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w, c->h);
+	XUngrabPointer(dpy, CurrentTime);
+	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
+}
+
+void
 buttonpress(XEvent *e)
 {
-	unsigned int i;
 	Client *c;
 	XButtonPressedEvent *ev = &e->xbutton;
 
@@ -577,10 +652,12 @@ buttonpress(XEvent *e)
 		if (c->isdock)
 			return;
 		focus(c);
-		for (i = 0; i < LENGTH(buttons); i++)
-			if (buttons[i].func && buttons[i].button == ev->button
-			&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
-				buttons[i].func(&buttons[i].arg);
+		if (CLEANMASK(Mod1Mask) == CLEANMASK(ev->state)) {
+			if (ev->button == Button1)
+				movemouse();
+			if (ev->button == Button3)
+				resizemouse();
+		}
 	}
 }
 
@@ -737,91 +814,6 @@ killclient(const Arg *arg)
 		XSetErrorHandler(xerror);
 		XUngrabServer(dpy);
 	}
-}
-
-void
-movemouse(const Arg *arg)
-{
-	int x, y, ocx, ocy, nx, ny, di;
-	unsigned int dui;
-	Client *c;
-	XEvent ev;
-	Time lasttime = 0;
-	Window dummy;
-
-	if (!(c = sel))
-		return;
-	if (c->isfullscreen || c->position != PFloat)
-		return;
-	ocx = c->x;
-	ocy = c->y;
-	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
-		None, None, CurrentTime) != GrabSuccess)
-		return;
-	if (!XQueryPointer(dpy, root, &dummy, &dummy, &x, &y, &di, &di, &dui))
-		return;
-	do {
-		XMaskEvent(dpy, MOUSEMASK|ExposureMask|SubstructureRedirectMask, &ev);
-		switch(ev.type) {
-		case ConfigureRequest:
-		case MapRequest:
-			handler[ev.type](&ev);
-			break;
-		case MotionNotify:
-			if ((ev.xmotion.time - lasttime) <= (1000 / 60))
-				continue;
-			lasttime = ev.xmotion.time;
-
-			nx = ocx + (ev.xmotion.x - x);
-			ny = ocy + (ev.xmotion.y - y);
-			if (c->position == PFloat)
-				resize(c, nx, ny, c->w, c->h, 1);
-			break;
-		}
-	} while (ev.type != ButtonRelease);
-	XUngrabPointer(dpy, CurrentTime);
-}
-
-void
-resizemouse(const Arg *arg)
-{
-	int ocx, ocy, nw, nh;
-	Client *c;
-	XEvent ev;
-	Time lasttime = 0;
-
-	if (!(c = sel))
-		return;
-	if (c->isfullscreen || c->position != PFloat)
-		return;
-	ocx = c->x;
-	ocy = c->y;
-	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
-		None, None, CurrentTime) != GrabSuccess)
-		return;
-	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w, c->h);
-	do {
-		XMaskEvent(dpy, MOUSEMASK|ExposureMask|SubstructureRedirectMask, &ev);
-		switch(ev.type) {
-		case ConfigureRequest:
-		case MapRequest:
-			handler[ev.type](&ev);
-			break;
-		case MotionNotify:
-			if ((ev.xmotion.time - lasttime) <= (1000 / 60))
-				continue;
-			lasttime = ev.xmotion.time;
-
-			nw = MAX(ev.xmotion.x - ocx - 1, 1);
-			nh = MAX(ev.xmotion.y - ocy - 1, 1);
-			if (c->position == PFloat)
-				resize(c, c->x, c->y, nw, nh, 1);
-			break;
-		}
-	} while (ev.type != ButtonRelease);
-	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w, c->h);
-	XUngrabPointer(dpy, CurrentTime);
-	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
 
 void

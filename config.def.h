@@ -40,11 +40,3 @@ static Key keys[] = {
 	{ Mod1Mask,              XK_Left,   setposition,  {.i = PLeft } },
 	{ Mod1Mask,              XK_Right,  setposition,  {.i = PRight } },
 };
-
-/* button definitions */
-static Button buttons[] = {
-	/* event mask       button          function        argument */
-	{ Mod1Mask,         Button1,        movemouse,      {0} },
-	{ Mod1Mask,         Button3,        resizemouse,    {0} },
-};
-
