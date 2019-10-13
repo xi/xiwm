@@ -285,7 +285,6 @@ resize(Client *c, int x, int y, int w, int h, int bw)
 	}
 	wc.border_width = bw;
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
-	configure(c);
 	XSync(dpy, False);
 }
 
