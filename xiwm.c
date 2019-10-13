@@ -49,7 +49,7 @@ struct Client {
 	int fx, fy, fw, fh;
 	unsigned int desktop;
 	int position;
-	int isfixed, isfullscreen, isdock;
+	Bool isfixed, isfullscreen, isdock;
 	Client *next;
 	Window win;
 };
@@ -111,7 +111,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[ConfigureRequest] = configurerequest,
 };
 static Atom wmatom[WMLast], netatom[NetLast];
-static int running = True;
+static Bool running = True;
 static unsigned int desktop;
 static float mfact = 0.5;
 static Display *dpy;
@@ -223,7 +223,7 @@ wintoclient(Window w)
 }
 
 void
-grabbuttons(Client *c, int focused)
+grabbuttons(Client *c, Bool focused)
 {
 	unsigned int i, j;
 	unsigned int modifiers[] = { 0, LockMask };
@@ -255,12 +255,12 @@ grabkeys(void)
 					True, GrabModeAsync, GrabModeAsync);
 }
 
-int
+Bool
 sendevent(Client *c, Atom proto)
 {
 	int n;
 	Atom *protocols;
-	int exists = 0;
+	Bool exists = False;
 	XEvent ev;
 
 	if (XGetWMProtocols(dpy, c->win, &protocols, &n)) {
@@ -390,7 +390,7 @@ arrange(void)
 }
 
 void
-setfullscreen(Client *c, int fullscreen)
+setfullscreen(Client *c, Bool fullscreen)
 {
 	if (fullscreen && !c->isfullscreen) {
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
@@ -571,7 +571,7 @@ manage(Window w, XWindowAttributes *wa)
 }
 
 void
-unmanage(Client *c, int destroyed)
+unmanage(Client *c, Bool destroyed)
 {
 	Client *i;
 	XWindowChanges wc;
