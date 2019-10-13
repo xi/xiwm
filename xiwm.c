@@ -1043,9 +1043,6 @@ run(void)
 void
 cleanup(void)
 {
-	Arg a = {.ui = ~0};
-
-	view(&a);
 	while (clients)
 		unmanage(clients, False);
 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
