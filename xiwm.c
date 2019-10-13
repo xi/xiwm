@@ -659,7 +659,7 @@ tag(const Arg *arg)
 	sel->desktop = arg->ui;
 	xsetclientdesktop(sel);
 	setdesktop(arg->ui);
-	focus(NULL);
+	restack();
 }
 
 void
