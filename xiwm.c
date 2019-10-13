@@ -474,21 +474,14 @@ detach(Client *c)
 }
 
 void
-unfocus(Client *c)
-{
-	if (!c)
-		return;
-	grabbuttons(c, False);
-	XSetWindowBorder(dpy, c->win, col_norm);
-}
-
-void
 focus(Client *c)
 {
 	if (!c || !ISVISIBLE(c))
 		for (c = clients; c && !ISVISIBLE(c); c = c->next);
-	if (sel && sel != c)
-		unfocus(sel);
+	if (sel && sel != c) {
+		grabbuttons(sel, False);
+		XSetWindowBorder(dpy, sel->win, col_norm);
+	}
 	if (c) {
 		XSetWindowBorder(dpy, c->win, col_high);
 		grabbuttons(c, True);
