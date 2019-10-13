@@ -493,6 +493,7 @@ focus(Client *c)
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
 	}
 	sel = c;
+	restack();
 }
 
 void
@@ -586,7 +587,6 @@ buttonpress(XEvent *e)
 		if (c->isdock)
 			return;
 		focus(c);
-		restack();
 		for (i = 0; i < LENGTH(buttons); i++)
 			if (buttons[i].func && buttons[i].button == ev->button
 			&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
@@ -727,10 +727,8 @@ focusstack(const Arg *arg)
 				if (ISVISIBLE(i))
 					c = i;
 	}
-	if (c) {
+	if (c)
 		focus(c);
-		restack();
-	}
 }
 
 void
@@ -779,7 +777,6 @@ movemouse(const Arg *arg)
 		return;
 	if (c->isfullscreen || c->position != PFloat)
 		return;
-	restack();
 	ocx = c->x;
 	ocy = c->y;
 	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
@@ -821,7 +818,6 @@ resizemouse(const Arg *arg)
 		return;
 	if (c->isfullscreen || c->position != PFloat)
 		return;
-	restack();
 	ocx = c->x;
 	ocy = c->y;
 	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
