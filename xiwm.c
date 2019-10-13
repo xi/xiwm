@@ -552,22 +552,11 @@ manage(Window w, XWindowAttributes *wa)
 }
 
 void
-unmanage(Client *c, Bool destroyed)
+unmanage(Client *c)
 {
 	Client *i;
-	XWindowChanges wc;
 
 	detach(c);
-	if (!destroyed) {
-		XGrabServer(dpy); /* avoid race conditions */
-		XSetErrorHandler(xerrordummy);
-		XConfigureWindow(dpy, c->win, CWBorderWidth, &wc); /* restore border */
-		XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
-		xsetclientstate(c, WithdrawnState);
-		XSync(dpy, False);
-		XSetErrorHandler(xerror);
-		XUngrabServer(dpy);
-	}
 	free(c);
 	focus(NULL);
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
@@ -648,7 +637,7 @@ unmapnotify(XEvent *e)
 		if (ev->send_event)
 			xsetclientstate(c, WithdrawnState);
 		else
-			unmanage(c, False);
+			unmanage(c);
 	}
 }
 
@@ -971,7 +960,7 @@ void
 cleanup(void)
 {
 	while (clients)
-		unmanage(clients, False);
+		unmanage(clients);
 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
 	XDestroyWindow(dpy, wmcheckwin);
 	XSync(dpy, False);
