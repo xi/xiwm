@@ -167,25 +167,6 @@ xerrordummy(Display *dpy, XErrorEvent *ee)
 	return 0;
 }
 
-void
-configure(Client *c)
-{
-	XConfigureEvent ce;
-
-	ce.type = ConfigureNotify;
-	ce.display = dpy;
-	ce.event = c->win;
-	ce.window = c->win;
-	ce.x = c->x;
-	ce.y = c->y;
-	ce.width = c->w;
-	ce.height = c->h;
-	ce.border_width = 0;
-	ce.above = None;
-	ce.override_redirect = False;
-	XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *)&ce);
-}
-
 Client *
 wintoclient(Window w)
 {
@@ -706,11 +687,23 @@ void
 configurerequest(XEvent *e)
 {
 	Client *c;
+	XConfigureEvent ce;
 	XConfigureRequestEvent *ev = &e->xconfigurerequest;
 	XWindowChanges wc = { ev->x, ev->y, ev->width, ev->height, ev->border_width, ev->above, ev->detail };
 
 	if ((c = wintoclient(ev->window)) && !c->isdock) {
-		configure(c);
+		ce.type = ConfigureNotify;
+		ce.display = dpy;
+		ce.event = c->win;
+		ce.window = c->win;
+		ce.x = c->x;
+		ce.y = c->y;
+		ce.width = c->w;
+		ce.height = c->h;
+		ce.border_width = 0;
+		ce.above = None;
+		ce.override_redirect = False;
+		XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *)&ce);
 	} else
 		XConfigureWindow(dpy, ev->window, ev->value_mask, &wc);
 	XSync(dpy, False);
