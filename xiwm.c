@@ -364,25 +364,18 @@ restack(void)
 }
 
 void
-arrange(void)
-{
-	layout();
-	restack();
-}
-
-void
 setfullscreen(Client *c, Bool fullscreen)
 {
 	if (fullscreen && !c->isfullscreen) {
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 			PropModeReplace, (unsigned char*) &netatom[NetWMFullscreen], 1);
 		c->isfullscreen = True;
-		arrange();
+		layout();
 	} else if (!fullscreen && c->isfullscreen){
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 			PropModeReplace, (unsigned char*) 0, 0);
 		c->isfullscreen = False;
-		arrange();
+		layout();
 	}
 }
 
@@ -533,13 +526,13 @@ manage(Window w, XWindowAttributes *wa)
 		PropModeAppend, (unsigned char *) &(c->win), 1);
 	XMoveResizeWindow(dpy, c->win, c->x + 2 * sw, c->y, c->w, c->h); /* some windows require this */
 	xsetclientstate(c, NormalState);
-	arrange();
 	XMapWindow(dpy, c->win);
 	focus(NULL);
+	layout();
 
 	if (c->isdock) {
 		bh = c->h;
-		arrange();
+		layout();
 	}
 }
 
@@ -550,12 +543,12 @@ unmanage(Client *c)
 
 	detach(c);
 	free(c);
-	focus(NULL);
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
 	for (i = clients; i; i = i->next)
 		XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
 			PropModeAppend, (unsigned char *) &(i->win), 1);
-	arrange();
+	focus(NULL);
+	layout();
 }
 
 /* event handlers */
@@ -613,7 +606,7 @@ clientmessage(XEvent *e)
 				xsetdesktop();
 			}
 			focus(c);
-			arrange();
+			layout();
 		}
 	}
 }
@@ -677,7 +670,7 @@ tag(const Arg *arg)
 		xsetdesktop();
 	}
 	focus(NULL);
-	arrange();
+	layout();
 }
 
 void
@@ -695,9 +688,9 @@ view(const Arg *arg)
 	if (arg->ui >= desktops)
 		return;
 	desktop = arg->ui;
-	focus(NULL);
-	arrange();
 	xsetdesktop();
+	focus(NULL);
+	layout();
 }
 
 void
@@ -737,14 +730,14 @@ setposition(const Arg *arg)
 	if (!sel)
 		return;
 	sel->position = arg->i;
-	arrange();
+	layout();
 }
 
 void
 setmfact(const Arg *arg)
 {
 	mfact += arg->f;
-	arrange();
+	layout();
 }
 
 void
