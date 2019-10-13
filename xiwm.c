@@ -110,7 +110,8 @@ static Bool running = True;
 static unsigned int desktop;
 static float mfact = 0.5;
 static Display *dpy;
-static Client *clients, *sel;
+static Client *clients;
+static Client *sel[DESKTOPS];
 static Window root, wmcheckwin;
 
 void
@@ -337,13 +338,13 @@ restack(void)
 	Client *c;
 	XEvent ev;
 
-	if (!sel)
+	if (!sel[desktop])
 		return;
-	if (sel->position == PLeft || sel->position == PRight)
+	if (sel[desktop]->position == PLeft || sel[desktop]->position == PRight)
 		for (c = clients; c; c = c->next)
 			if (ISVISIBLE(c) && (c->position == PLeft || c->position == PRight))
 				XRaiseWindow(dpy, c->win);
-	XRaiseWindow(dpy, sel->win);
+	XRaiseWindow(dpy, sel[desktop]->win);
 	XSync(dpy, False);
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
@@ -455,10 +456,15 @@ attach(Client *c)
 void
 detach(Client *c)
 {
+	int i;
 	Client **tc;
 
 	for (tc = &clients; *tc && *tc != c; tc = &(*tc)->next);
 	*tc = c->next;
+
+	for (i = 0; i < DESKTOPS; i++)
+		if (c == sel[i])
+			sel[i] = NULL;
 }
 
 void
@@ -466,9 +472,9 @@ focus(Client *c)
 {
 	if (!c || !ISVISIBLE(c))
 		for (c = clients; c && !ISVISIBLE(c); c = c->next);
-	if (sel && sel != c) {
-		grabbuttons(sel, False);
-		XSetWindowBorder(dpy, sel->win, COL_NORM);
+	if (sel[desktop] && sel[desktop] != c) {
+		grabbuttons(sel[desktop], False);
+		XSetWindowBorder(dpy, sel[desktop]->win, COL_NORM);
 	}
 	if (c) {
 		XSetWindowBorder(dpy, c->win, COL_HIGH);
@@ -480,7 +486,7 @@ focus(Client *c)
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
 	}
-	sel = c;
+	sel[desktop] = c;
 	restack();
 }
 
@@ -567,7 +573,7 @@ movemouse(void)
 	Time lasttime = 0;
 	Window dummy;
 
-	if (!(c = sel))
+	if (!(c = sel[desktop]))
 		return;
 	if (c->isfullscreen || c->position != PFloat)
 		return;
@@ -608,7 +614,7 @@ resizemouse(void)
 	XEvent ev;
 	Time lasttime = 0;
 
-	if (!(c = sel))
+	if (!(c = sel[desktop]))
 		return;
 	if (c->isfullscreen || c->position != PFloat)
 		return;
@@ -675,7 +681,7 @@ clientmessage(XEvent *e)
 		|| cme->data.l[2] == netatom[NetWMFullscreen])
 			setfullscreen(c, (cme->data.l[0] == 1 || (cme->data.l[0] == 2 && !c->isfullscreen)));
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
-		if (c != sel) {
+		if (c != sel[desktop]) {
 			setdesktop(c->desktop);
 			focus(c);
 		}
@@ -728,16 +734,19 @@ maprequest(XEvent *e)
 void
 tag(const Arg *arg)
 {
-	if (!sel)
+	Client *c;
+
+	if (!(c = sel[desktop]))
 		return;
-	if (arg->ui >= desktops)
+	if (arg->ui >= DESKTOPS)
 		return;
-	if (sel->desktop == arg->ui)
+	if (c->desktop == arg->ui)
 		return;
-	sel->desktop = arg->ui;
-	xsetclientdesktop(sel);
+	sel[desktop] = NULL;
+	c->desktop = arg->ui;
+	xsetclientdesktop(c);
 	setdesktop(arg->ui);
-	restack();
+	focus(c);
 }
 
 void
@@ -766,14 +775,14 @@ focusstack(const Arg *arg)
 {
 	Client *c = NULL, *i;
 
-	if (!sel)
+	if (!sel[desktop])
 		return;
 	if (arg->i > 0) {
-		for (c = sel->next; c && !ISVISIBLE(c); c = c->next);
+		for (c = sel[desktop]->next; c && !ISVISIBLE(c); c = c->next);
 		if (!c)
 			for (c = clients; c && !ISVISIBLE(c); c = c->next);
 	} else {
-		for (i = clients; i != sel; i = i->next)
+		for (i = clients; i != sel[desktop]; i = i->next)
 			if (ISVISIBLE(i))
 				c = i;
 		if (!c)
@@ -788,9 +797,9 @@ focusstack(const Arg *arg)
 void
 setposition(const Arg *arg)
 {
-	if (!sel)
+	if (!sel[desktop])
 		return;
-	sel->position = arg->i;
+	sel[desktop]->position = arg->i;
 	layout();
 }
 
@@ -804,13 +813,13 @@ setmfact(const Arg *arg)
 void
 killclient(const Arg *arg)
 {
-	if (!sel)
+	if (!sel[desktop])
 		return;
-	if (!sendevent(sel, wmatom[WMDelete])) {
+	if (!sendevent(sel[desktop], wmatom[WMDelete])) {
 		XGrabServer(dpy);
 		XSetErrorHandler(xerrordummy);
 		XSetCloseDownMode(dpy, DestroyAll);
-		XKillClient(dpy, sel->win);
+		XKillClient(dpy, sel[desktop]->win);
 		XSync(dpy, False);
 		XSetErrorHandler(xerror);
 		XUngrabServer(dpy);
@@ -841,7 +850,7 @@ spawn(const Arg *arg)
 void
 setup(void)
 {
-	int screen;
+	int i, screen;
 	Atom utf8string;
 	const unsigned int desktops = DESKTOPS;
 
@@ -850,6 +859,9 @@ setup(void)
 
 	/* clean up any zombies immediately */
 	sigchld(0);
+
+	for (i = 0; i < DESKTOPS; i++)
+		sel[i] = NULL;
 
 	/* init screen */
 	screen = DefaultScreen(dpy);
