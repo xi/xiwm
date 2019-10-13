@@ -986,7 +986,6 @@ setup(void)
 	/* EWMH support per view */
 	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
 		PropModeReplace, (unsigned char *) netatom, NetLast);
-	xsetdesktop();
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
 
 	/* select events */
@@ -995,6 +994,7 @@ setup(void)
 		|LeaveWindowMask|StructureNotifyMask|PropertyChangeMask;
 	XSelectInput(dpy, root, wa.event_mask);
 	grabkeys();
+	xsetdesktop();
 	focus(NULL);
 }
 
