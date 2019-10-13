@@ -28,6 +28,7 @@ enum { NetSupported, NetWMName, NetWMDesktop, NetWMState, NetWMCheck,
        NetWMWindowTypeDialog, NetWMWindowTypeDock,
        NetClientList, NetCurrentDesktop, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
+typedef enum { PFloat, PMax, PLeft, PRight } Position;
 
 typedef union {
 	int i;
@@ -48,7 +49,7 @@ struct Client {
 	int x, y, w, h;
 	int fx, fy, fw, fh;
 	unsigned int desktop;
-	int position;
+	Position position;
 	Bool isfixed, isfullscreen, isdock;
 	Client *next;
 	Window win;
@@ -65,7 +66,7 @@ typedef struct {
 	const char *class;
 	const char *instance;
 	unsigned int desktop;
-	int position;
+	Position position;
 } Rule;
 
 /* actions */
@@ -312,7 +313,7 @@ resize(Client *c, int x, int y, int w, int h, int bw)
 	c->y = wc.y = y;
 	c->w = wc.width = w;
 	c->h = wc.height = h;
-	if (c->position < 0 && !c->isfullscreen) {
+	if (c->position == PFloat && !c->isfullscreen) {
 		c->fx = c->x;
 		c->fy = c->y;
 		c->fw = c->w;
@@ -325,7 +326,7 @@ resize(Client *c, int x, int y, int w, int h, int bw)
 }
 
 void
-layoutcolumn(int pos, int x, int w)
+layoutcolumn(Position pos, int x, int w)
 {
 	Client *c;
 	unsigned int n = 0;
@@ -355,14 +356,14 @@ layout(void)
 			XMoveWindow(dpy, c->win, sw * -2, c->y);
 		else if (c->isfullscreen)
 			resize(c, 0, 0, sw, sh, 0);
-		else if (c->position < 0)
+		else if (c->position == PFloat)
 			resize(c, c->fx, c->fy, c->fw, c->fh, 1);
-		else if (c->position == 0)
+		else if (c->position == PMax)
 			resize(c, 0, bh, sw, sh - bh, 0);
 	}
 
-	layoutcolumn(1, 0, sw * mfact);
-	layoutcolumn(2, sw * mfact, sw - sw * mfact);
+	layoutcolumn(PLeft, 0, sw * mfact);
+	layoutcolumn(PRight, sw * mfact, sw - sw * mfact);
 }
 
 void
@@ -373,9 +374,9 @@ restack(void)
 
 	if (!sel)
 		return;
-	if (sel->position > 0)
+	if (sel->position == PLeft || sel->position == PRight)
 		for (c = clients; c; c = c->next)
-			if (ISVISIBLE(c) && c->position > 0)
+			if (ISVISIBLE(c) && (c->position == PLeft || c->position == PRight))
 				XRaiseWindow(dpy, c->win);
 	XRaiseWindow(dpy, sel->win);
 	XSync(dpy, False);
@@ -442,7 +443,7 @@ updatewindowtype(Client *c)
 	if (state == netatom[NetWMFullscreen])
 		setfullscreen(c, True);
 	if (wtype == netatom[NetWMWindowTypeDialog])
-		c->position = -1;
+		c->position = PFloat;
 	if (wtype == netatom[NetWMWindowTypeDock])
 		c->isdock = True;
 }
@@ -530,6 +531,7 @@ manage(Window w, XWindowAttributes *wa)
 
 	c = calloc(1, sizeof(Client));
 	c->win = w;
+	c->position = PMax;
 	/* geometry */
 	c->fx = c->x = wa->x == 0 ? (sw - wa->width) / 2 : wa->x;
 	c->fy = c->y = wa->y == 0 ? (sh - wa->height) / 2 : wa->y;
@@ -550,8 +552,8 @@ manage(Window w, XWindowAttributes *wa)
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
 	grabbuttons(c, False);
 	if (trans != None || c->isfixed)
-		c->position = -1;
-	if (c->position < 0)
+		c->position = PFloat;
+	if (c->position == PFloat)
 		XRaiseWindow(dpy, c->win);
 	attach(c);
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
@@ -863,7 +865,7 @@ movemouse(const Arg *arg)
 
 	if (!(c = sel))
 		return;
-	if (c->isfullscreen || c->position >= 0)
+	if (c->isfullscreen || c->position != PFloat)
 		return;
 	restack();
 	ocx = c->x;
@@ -887,7 +889,7 @@ movemouse(const Arg *arg)
 
 			nx = ocx + (ev.xmotion.x - x);
 			ny = ocy + (ev.xmotion.y - y);
-			if (c->position < 0)
+			if (c->position == PFloat)
 				resize(c, nx, ny, c->w, c->h, 1);
 			break;
 		}
@@ -905,7 +907,7 @@ resizemouse(const Arg *arg)
 
 	if (!(c = sel))
 		return;
-	if (c->isfullscreen || c->position >= 0)
+	if (c->isfullscreen || c->position != PFloat)
 		return;
 	restack();
 	ocx = c->x;
@@ -928,7 +930,7 @@ resizemouse(const Arg *arg)
 
 			nw = MAX(ev.xmotion.x - ocx - 1, 1);
 			nh = MAX(ev.xmotion.y - ocy - 1, 1);
-			if (c->position < 0)
+			if (c->position == PFloat)
 				resize(c, c->x, c->y, nw, nh, 1);
 			break;
 		}

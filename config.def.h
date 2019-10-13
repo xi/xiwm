@@ -11,7 +11,7 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 */
 	/* class         instance    desktop   position */
-	{ "Thunderbird", NULL,       0,        0 },
+	{ "Thunderbird", NULL,       0,        PMax },
 };
 
 /* commands */
@@ -35,10 +35,10 @@ static Key keys[] = {
 	{ Mod1Mask|ControlMask,  XK_Left,   viewrel,      {.i = -1 } },
 	{ Mod1Mask|ShiftMask,    XK_Right,  tagrel,       {.i = +1 } },
 	{ Mod1Mask|ShiftMask,    XK_Left,   tagrel,       {.i = -1 } },
-	{ Mod1Mask,              XK_Down,   setposition,  {.i = -1 } },
-	{ Mod1Mask,              XK_Up,     setposition,  {.i = 0 } },
-	{ Mod1Mask,              XK_Left,   setposition,  {.i = 1 } },
-	{ Mod1Mask,              XK_Right,  setposition,  {.i = 2 } },
+	{ Mod1Mask,              XK_Down,   setposition,  {.i = PFloat } },
+	{ Mod1Mask,              XK_Up,     setposition,  {.i = PMax } },
+	{ Mod1Mask,              XK_Left,   setposition,  {.i = PLeft } },
+	{ Mod1Mask,              XK_Right,  setposition,  {.i = PRight } },
 };
 
 /* button definitions */
