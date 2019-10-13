@@ -278,13 +278,6 @@ xsetclientdesktop(Client *c)
 }
 
 void
-xsetdesktop(void)
-{
-	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
-		PropModeReplace, (unsigned char *) &desktop, 1);
-}
-
-void
 resize(Client *c, int x, int y, int w, int h, int bw)
 {
 	XWindowChanges wc;
@@ -377,6 +370,17 @@ setfullscreen(Client *c, Bool fullscreen)
 		c->isfullscreen = False;
 		layout();
 	}
+}
+
+void
+setdesktop(unsigned int i)
+{
+	if (i == desktop || i > desktops)
+		return;
+	desktop = i;
+	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
+		PropModeReplace, (unsigned char *) &desktop, 1);
+	layout();
 }
 
 Atom
@@ -594,12 +598,8 @@ clientmessage(XEvent *e)
 			setfullscreen(c, (cme->data.l[0] == 1 || (cme->data.l[0] == 2 && !c->isfullscreen)));
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
 		if (c != sel) {
-			if (c->desktop != desktop) {
-				desktop = c->desktop;
-				xsetdesktop();
-			}
+			setdesktop(c->desktop);
 			focus(c);
-			layout();
 		}
 	}
 }
@@ -658,12 +658,8 @@ tag(const Arg *arg)
 		return;
 	sel->desktop = arg->ui;
 	xsetclientdesktop(sel);
-	if (desktop != arg->ui) {
-		desktop = arg->ui;
-		xsetdesktop();
-	}
+	setdesktop(arg->ui);
 	focus(NULL);
-	layout();
 }
 
 void
@@ -676,21 +672,15 @@ tagrel(const Arg *arg)
 void
 view(const Arg *arg)
 {
-	if (arg->ui == desktop)
-		return;
-	if (arg->ui >= desktops)
-		return;
-	desktop = arg->ui;
-	xsetdesktop();
+	setdesktop(arg->ui);
 	focus(NULL);
-	layout();
 }
 
 void
 viewrel(const Arg *arg)
 {
-	Arg a = {.ui = desktop + arg->i};
-	view(&a);
+	setdesktop(desktop + arg->i);
+	focus(NULL);
 }
 
 void
@@ -873,7 +863,6 @@ setup(void)
 	sh = DisplayHeight(dpy, screen);
 	root = RootWindow(dpy, screen);
 	bh = 0;
-	desktop = inidesktop;
 
 	/* init atoms */
 	utf8string = XInternAtom(dpy, "UTF8_STRING", False);
@@ -910,7 +899,7 @@ setup(void)
 	/* select events */
 	XSelectInput(dpy, root, ROOTMASK);
 	grabkeys();
-	xsetdesktop();
+	setdesktop(inidesktop);
 	focus(NULL);
 }
 
