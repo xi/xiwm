@@ -1,10 +1,10 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int desktops   = 3;
-static const unsigned int inidesktop = 1;
-static const unsigned int col_norm   = 0x444444;
-static const unsigned int col_high   = 0x335588;
+#define DESKTOPS 3
+#define INIDESKTOP 1
+#define COL_NORM 0x444444
+#define COL_HIGH 0x335588
 
 static const Rule rules[] = {
 	/* xprop(1):

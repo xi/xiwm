@@ -89,6 +89,9 @@ static void maprequest(XEvent *e);
 /* signals */
 static void sigchld(int unused);
 
+/* configuration, allows nested code to access above variables */
+#include "config.h"
+
 /* variables */
 static const char broken[] = "broken";
 static int sw, sh;           /* X display screen geometry width, height */
@@ -109,9 +112,6 @@ static float mfact = 0.5;
 static Display *dpy;
 static Client *clients, *sel;
 static Window root, wmcheckwin;
-
-/* configuration, allows nested code to access above variables */
-#include "config.h"
 
 void
 die(const char *fmt, ...) {
@@ -367,7 +367,7 @@ setfullscreen(Client *c, Bool fullscreen)
 void
 setdesktop(unsigned int i)
 {
-	if (i == desktop || i > desktops)
+	if (i == desktop || i > DESKTOPS)
 		return;
 	desktop = i;
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
@@ -468,10 +468,10 @@ focus(Client *c)
 		for (c = clients; c && !ISVISIBLE(c); c = c->next);
 	if (sel && sel != c) {
 		grabbuttons(sel, False);
-		XSetWindowBorder(dpy, sel->win, col_norm);
+		XSetWindowBorder(dpy, sel->win, COL_NORM);
 	}
 	if (c) {
-		XSetWindowBorder(dpy, c->win, col_high);
+		XSetWindowBorder(dpy, c->win, COL_HIGH);
 		grabbuttons(c, True);
 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 		XChangeProperty(dpy, root, netatom[NetActiveWindow], XA_WINDOW, 32,
@@ -512,7 +512,7 @@ manage(Window w, XWindowAttributes *wa)
 	if (c->isdock)
 		bh = c->h;
 
-	XSetWindowBorder(dpy, c->win, col_norm);
+	XSetWindowBorder(dpy, c->win, COL_NORM);
 	XSelectInput(dpy, w, WINMASK);
 	grabbuttons(c, False);
 	attach(c);
@@ -843,6 +843,7 @@ setup(void)
 {
 	int screen;
 	Atom utf8string;
+	const unsigned int desktops = DESKTOPS;
 
 	XSync(dpy, False);
 	XSetErrorHandler(xerror);
@@ -895,7 +896,7 @@ setup(void)
 	/* select events */
 	XSelectInput(dpy, root, ROOTMASK);
 	grabkeys();
-	setdesktop(inidesktop);
+	setdesktop(INIDESKTOP);
 	focus(NULL);
 }
 
