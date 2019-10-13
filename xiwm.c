@@ -760,14 +760,14 @@ void
 view(const Arg *arg)
 {
 	setdesktop(arg->ui);
-	focus(NULL);
+	focus(sel[desktop]);
 }
 
 void
 viewrel(const Arg *arg)
 {
 	setdesktop(desktop + arg->i);
-	focus(NULL);
+	focus(sel[desktop]);
 }
 
 void
