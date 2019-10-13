@@ -87,7 +87,6 @@ static void spawn(const Arg *arg);
 static void keypress(XEvent *e);
 static void buttonpress(XEvent *e);
 static void clientmessage(XEvent *e);
-static void destroynotify(XEvent *e);
 static void unmapnotify(XEvent *e);
 static void configurerequest(XEvent *e);
 static void maprequest(XEvent *e);
@@ -104,7 +103,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[KeyPress] = keypress,
 	[ButtonPress] = buttonpress,
 	[ClientMessage] = clientmessage,
-	[DestroyNotify] = destroynotify,
 	[UnmapNotify] = unmapnotify,
 	[MapRequest] = maprequest,
 	[ConfigureRequest] = configurerequest,
@@ -653,16 +651,6 @@ clientmessage(XEvent *e)
 			arrange();
 		}
 	}
-}
-
-void
-destroynotify(XEvent *e)
-{
-	Client *c;
-	XDestroyWindowEvent *ev = &e->xdestroywindow;
-
-	if ((c = wintoclient(ev->window)))
-		unmanage(c, True);
 }
 
 void
