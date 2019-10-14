@@ -523,7 +523,7 @@ unmanage(Client *c)
 	for (i = clients; i; i = i->next)
 		XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
 			PropModeAppend, (unsigned char *) &(i->win), 1);
-	focus(NULL);
+	focus(sel[desktop]);
 	layout();
 }
 
