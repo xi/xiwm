@@ -812,6 +812,7 @@ setposition(const Arg *arg)
 		return;
 	sel[desktop]->position = arg->i;
 	layout();
+	restack();
 }
 
 void
