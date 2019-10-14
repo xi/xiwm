@@ -48,7 +48,7 @@ struct Client {
 	unsigned int desktop;
 	Position position;
 	Bool isfixed, isfullscreen, isdock;
-	Client *next;
+	Client *next, *transient;
 	Window win;
 };
 
@@ -314,6 +314,17 @@ layout(void)
 }
 
 void
+raiseclient(Client *c)
+{
+	Client *i;
+
+	XRaiseWindow(dpy, c->win);
+	for (i = clients; i; i = i->next)
+		if (i->transient == c)
+			XRaiseWindow(dpy, i->win);
+}
+
+void
 restack(void)
 {
 	Client *c;
@@ -324,8 +335,8 @@ restack(void)
 	if (sel[desktop]->position == PLeft || sel[desktop]->position == PRight)
 		for (c = clients; c; c = c->next)
 			if (ISVISIBLE(c) && (c->position == PLeft || c->position == PRight))
-				XRaiseWindow(dpy, c->win);
-	XRaiseWindow(dpy, sel[desktop]->win);
+				raiseclient(c);
+	raiseclient(sel[desktop]);
 	XSync(dpy, False);
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
@@ -445,12 +456,14 @@ detach(Client *c)
 
 	for (i = 0; i < DESKTOPS; i++)
 		if (c == sel[i])
-			sel[i] = NULL;
+			sel[i] = c->transient;
 }
 
 void
 focus(Client *c)
 {
+	Client *i, *d;
+
 	if (!c || !ISVISIBLE(c))
 		for (c = clients; c && !ISVISIBLE(c); c = c->next);
 	if (sel[desktop] && sel[desktop] != c) {
@@ -458,11 +471,15 @@ focus(Client *c)
 		XSetWindowBorder(dpy, sel[desktop]->win, COL_NORM);
 	}
 	if (c) {
-		XSetWindowBorder(dpy, c->win, COL_HIGH);
+		d = c;
+		for (i = clients; i; i = i->next)
+			if (i->transient == c)
+				d = i;
+		XSetWindowBorder(dpy, d->win, COL_HIGH);
 		grabbuttons(c, True);
-		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+		XSetInputFocus(dpy, d->win, RevertToPointerRoot, CurrentTime);
 		XChangeProperty(dpy, root, netatom[NetActiveWindow], XA_WINDOW, 32,
-			PropModeReplace, (unsigned char *) &(c->win), 1);
+			PropModeReplace, (unsigned char *) &(d->win), 1);
 	} else {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
@@ -490,6 +507,7 @@ manage(Window w, XWindowAttributes *wa)
 	applyrules(c);
 	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans)))
 		c->desktop = t->desktop;
+	c->transient = t;
 	xsetclientdesktop(c);
 	updatewindowtype(c);
 	updatefixed(c);
@@ -771,16 +789,16 @@ focusstack(const Arg *arg)
 	if (!sel[desktop])
 		return;
 	if (arg->i > 0) {
-		for (c = sel[desktop]->next; c && !ISVISIBLE(c); c = c->next);
+		for (c = sel[desktop]->next; c && (!ISVISIBLE(c) || c->transient); c = c->next);
 		if (!c)
-			for (c = clients; c && !ISVISIBLE(c); c = c->next);
+			for (c = clients; c && (!ISVISIBLE(c) || c->transient); c = c->next);
 	} else {
-		for (i = clients; i != sel[desktop]; i = i->next)
-			if (ISVISIBLE(i))
+		for (i = clients; i && i != sel[desktop]; i = i->next)
+			if (ISVISIBLE(i) && !i->transient)
 				c = i;
 		if (!c)
 			for (; i; i = i->next)
-				if (ISVISIBLE(i))
+				if (ISVISIBLE(i) && !i->transient)
 					c = i;
 	}
 	if (c)
