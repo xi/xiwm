@@ -500,7 +500,8 @@ manage(Window w, XWindowAttributes *wa)
 	c->desktop = desktop;
 	/* geometry */
 	c->fx = c->x = wa->x == 0 ? (sw - wa->width) / 2 : wa->x;
-	c->fy = c->y = wa->y == 0 ? (sh - wa->height) / 2 : wa->y;
+	c->fy = c->y = wa->y == 0 ? (sh + bh - wa->height) / 2 : wa->y;
+
 	c->fw = c->w = wa->width;
 	c->fh = c->h = wa->height;
 
