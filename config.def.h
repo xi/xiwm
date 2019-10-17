@@ -27,7 +27,6 @@ static Key keys[] = {
 	{ Mod1Mask,              XK_l,      setmfact,     {.f = +0.02 } },
 	{ Mod1Mask,              XK_h,      setmfact,     {.f = -0.02 } },
 	{ Mod1Mask,              XK_F4,     killclient,   {0} },
-	{ Mod1Mask|ShiftMask,    XK_q,      quit,         {0} },
 	{ Mod4Mask,              XK_F1,     view,         {.ui = 0 } },
 	{ Mod4Mask,              XK_F2,     view,         {.ui = 1 } },
 	{ Mod4Mask,              XK_F3,     view,         {.ui = 2 } },

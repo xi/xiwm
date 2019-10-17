@@ -75,7 +75,6 @@ static void focusstack(const Arg *arg);
 static void setposition(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void killclient(const Arg *arg);
-static void quit(const Arg *arg);
 static void spawn(const Arg *arg);
 
 /* X event handlers */
@@ -106,7 +105,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[ConfigureRequest] = configurerequest,
 };
 static Atom wmatom[WMLast], netatom[NetLast];
-static Bool running = True;
 static unsigned int desktop;
 static float mfact = 0.5;
 static Display *dpy;
@@ -838,12 +836,6 @@ killclient(const Arg *arg)
 }
 
 void
-quit(const Arg *arg)
-{
-	running = False;
-}
-
-void
 spawn(const Arg *arg)
 {
 	if (fork() == 0) {
@@ -933,21 +925,9 @@ run(void)
 {
 	XEvent ev;
 	XSync(dpy, False);
-	while (running && !XNextEvent(dpy, &ev))
+	while (!XNextEvent(dpy, &ev))
 		if (handler[ev.type])
 			handler[ev.type](&ev);
-}
-
-void
-cleanup(void)
-{
-	while (clients)
-		unmanage(clients);
-	XUngrabKey(dpy, AnyKey, AnyModifier, root);
-	XDestroyWindow(dpy, wmcheckwin);
-	XSync(dpy, False);
-	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-	XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
 }
 
 int
@@ -960,7 +940,4 @@ main(int argc, char *argv[])
 	setup();
 	runautostart();
 	run();
-	cleanup();
-	XCloseDisplay(dpy);
-	return EXIT_SUCCESS;
 }
