@@ -245,7 +245,6 @@ resize(Client *c, int x, int y, int w, int h, int bw)
 	}
 	wc.border_width = bw;
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
-	XSync(dpy, False);
 }
 
 void
@@ -313,7 +312,6 @@ restack(void)
 			if (ISVISIBLE(c) && (c->position == PLeft || c->position == PRight))
 				raiseclient(c);
 	raiseclient(sel[desktop]);
-	XSync(dpy, False);
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
 
@@ -699,7 +697,6 @@ configurerequest(XEvent *e)
 		XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *)&ce);
 	} else
 		XConfigureWindow(dpy, ev->window, ev->value_mask, &wc);
-	XSync(dpy, False);
 }
 
 void
@@ -806,7 +803,6 @@ killclient(const Arg *arg)
 		XGrabServer(dpy);
 		XSetCloseDownMode(dpy, DestroyAll);
 		XKillClient(dpy, sel[desktop]->win);
-		XSync(dpy, False);
 		XUngrabServer(dpy);
 	}
 }
@@ -833,7 +829,6 @@ setup(void)
 	Atom utf8string;
 	const unsigned int desktops = DESKTOPS;
 
-	XSync(dpy, False);
 	XSetErrorHandler(xerrordummy);
 
 	/* clean up any zombies immediately */
@@ -900,7 +895,6 @@ void
 run(void)
 {
 	XEvent ev;
-	XSync(dpy, False);
 	while (!XNextEvent(dpy, &ev))
 		if (handler[ev.type])
 			handler[ev.type](&ev);
