@@ -271,6 +271,7 @@ void
 layout(void)
 {
 	Client *c;
+	XWindowChanges wc;
 
 	// show before hide to avoid flicker
 	for (c = clients; c; c = c->next) {
@@ -285,8 +286,10 @@ layout(void)
 	}
 
 	for (c = clients; c; c = c->next)
-		if (!ISVISIBLE(c) && !c->isdock)
-			XMoveWindow(dpy, c->win, sw * -2, c->y);
+		if (!ISVISIBLE(c) && !c->isdock) {
+			wc.x = sw * -2;
+			XConfigureWindow(dpy, c->win, CWX, &wc);
+		}
 
 	layoutcolumn(PLeft, 0, sw * mfact);
 	layoutcolumn(PRight, sw * mfact, sw - sw * mfact);
