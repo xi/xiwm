@@ -272,17 +272,21 @@ layout(void)
 {
 	Client *c;
 
+	// show before hide to avoid flicker
 	for (c = clients; c; c = c->next) {
-		if (c->isdock) {}
-		else if (!ISVISIBLE(c))
-			XMoveWindow(dpy, c->win, sw * -2, c->y);
-		else if (c->isfullscreen)
+		if (c->isdock || !ISVISIBLE(c))
+			continue;
+		if (c->isfullscreen)
 			resize(c, 0, 0, sw, sh, 0);
 		else if (c->position == PFloat)
 			resize(c, c->fx, c->fy, c->fw, c->fh, 1);
 		else if (c->position == PMax)
 			resize(c, 0, bh, sw, sh - bh, 0);
 	}
+
+	for (c = clients; c; c = c->next)
+		if (!ISVISIBLE(c) && !c->isdock)
+			XMoveWindow(dpy, c->win, sw * -2, c->y);
 
 	layoutcolumn(PLeft, 0, sw * mfact);
 	layoutcolumn(PRight, sw * mfact, sw - sw * mfact);
